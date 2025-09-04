@@ -65,6 +65,23 @@ kubectl apply -f argo-app-prod.yaml
 4. Make sure your application repository is configured to update image tags in this Helm repo via CI/CD.
 
 
+## Using a Private Docker Repository
+
+If you want to use your **private Docker registry**, you need to create a Kubernetes secret with your repository credentials.
+
+- The secret name should match the value in your `values-gradle.yaml` and  `values-gradle-dev.yaml` files (**default:** `regcd`).  
+- The secret should be created in the deployment namespace (**default:** `backend`).
+
+### Example command to create the secret:
+
+```bash
+kubectl create secret docker-registry regcd \
+  --docker-server=<YOUR_REGISTRY_URL> \
+  --docker-username=<YOUR_USERNAME> \
+  --docker-password=<YOUR_PASSWORD> \
+  --namespace backend
+```
+
 ## Best Practices
 
 - **Developers should only push to the `develop` branch.**
