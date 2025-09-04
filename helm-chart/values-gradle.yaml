@@ -1,0 +1,112 @@
+# We can set minimum number of pods we need for our application
+# Note: In case you want to use HPAv2 then then this replicaCount is of no use.
+#.      It will only work when HPA is not there.
+replicaCount: 1
+revisionHistoryLimit: 3
+
+# Update the Namespace where we need to deploy this app
+namespace: "backend"
+
+# Update Image repository according to the actual repository. Currently Github Container Registry is used.
+# Format is <Repository>/<Organisation OR Username>
+# Tag will be updated by Github Actions.
+
+image:
+  repository: ghcr.io/sadityalal
+  name: projectapp
+  tag: 8af251d
+  pullPolicy: IfNotPresent
+
+# Since we use private registry we need to authenticate before pulling the image.
+# This secret will be created automatically in CICD pipeline when will deploy the application.
+imagePullSecrets:
+  name: regcd
+
+## Update Strategy i.e. Rolling Update or Recreate
+update_strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+# If Applcation uses http endpoints to show contents on web page then we can enabled the service and edit the ports.
+# Since it is a gradle app Service is disabled.
+service:
+  enabled: false
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      nodePort: 30098
+
+# Labes for Resources
+labels:
+  app: gradle
+  tier: backend
+  env: test
+
+# If you need separate Service Account for this application, we can enabled it else we can disbale it.
+# Kubernetes will attach default service account.
+# Since it is best practice to have seprate Service Account for each app, it is enabled with minimum permissions.
+serviceAccount:
+  enabled: true
+  name: backend-gradle-sa
+  coreResources: ["pods", "secrets"]
+  appsResources: ["deployments"]
+  coreVerbs: ["get", "list", "watch", "create", "patch", "delete"]
+  appsVerbs: ["get", "list", "watch", "create", "patch", "delete"]
+
+
+# Enable only if we want to persist the data of application, Below are temporary Values
+volumes:
+  enabled: false
+  mountPathName: backend-data
+  pv: backend-pv
+  pvc: backend-pvc
+  storageClassName: local-storage
+  path: /app-data
+  pvpath: /app-data
+  accessModes:
+    type: "ReadWriteOnce"
+
+# Resource Limits for best practice so that our Pod doesnt consume more than what it actually needs.
+resources:
+  requests:
+    memory: 100Mi
+    cpu: 50m
+  limits:
+    memory: 250Mi
+    cpu: 100m
+
+# In Case Application needs some secrets to run then we can enabled this. It will create secret maps in our Deployment file.
+# Note: Since we cannot pass actual secret values in helm chart or in repository, we need to create secrets seprately or in CICD Pipeline.
+secrets:
+  enabled: false
+  name: backend-sec
+  env:
+    VALUE_1: main_key
+    VALUE_2: user_key
+
+# It is best practice to check application status so we can add probes in deployment.
+# We can also add other probes as needed.
+# Since it is gradle app and no service is created for http traffic we can just create simple file there to check if container is live.
+probes:
+  livenessProbe:
+    exec:
+      command:
+        - cat
+        - /tmp/healthy
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+
+# If Horizontal pod autoscaler is needed then we need to enable it below.
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 90
+  targetMemoryUtilizationPercentage: 90
+  upStabilizationWindowSeconds: 10
+  downStabilizationWindowSeconds: 600

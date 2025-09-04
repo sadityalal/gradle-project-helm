@@ -1,0 +1,11 @@
+apiVersion: v2
+
+name: gradle-app
+
+description: This is a 2 tier app using nginx as frontend, flask as backend and mysql as database. Same templates can be used for all 3 services. just update the values.yaml accordingly.
+
+type: application
+
+version: 1.0.1
+
+appVersion: "1.16.0"
