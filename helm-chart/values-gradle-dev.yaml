@@ -17,8 +17,7 @@ image:
 
 # Since we use private registry we need to authenticate before pulling the image.
 # This secret will be created automatically in CICD pipeline when will deploy the application.
-imagePullSecrets:
-  name: regcd
+imagePullSecrets: []
 
 ## Update Strategy i.e. Rolling Update or Recreate
 update_strategy:
