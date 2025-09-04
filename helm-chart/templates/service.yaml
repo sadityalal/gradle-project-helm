@@ -1,0 +1,13 @@
+{{ if .Values.service.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gradle-app.fullname" . }}-svc
+  namespace: {{ .Values.namespace | quote }}
+spec:
+  selector: {{ include "mylabels" . | nindent 4 }}
+  ports:
+    {{- include "servicePorts" . | nindent 4 }}
+  type: {{ .Values.service.type | default "ClusterIP" }}
+
+{{- end }}

@@ -1,0 +1,11 @@
+apiVersion: v2
+
+name: gradle-app
+
+description: This is a simple Gradle app. It prints "hello-world" after 2 seconds each time.
+
+type: application
+
+version: 1.0.1
+
+appVersion: "1.16.0"

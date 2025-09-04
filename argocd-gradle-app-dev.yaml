@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gradle-app-dev
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/sadityalal/gradle-project-helm
+    path: helm-chart
+    targetRevision: develop
+    helm:
+      valueFiles:
+        - values-gradle-dev.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backend-dev
+
+  syncPolicy:
+    automated:
+      enabled: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m0s
+

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gradle-app.fullname" . }}
+  namespace: {{ .Values.namespace | quote }}
+  labels: {{ include "mylabels" . | nindent 4 }}
+spec:
+{{- if not .Values.hpa.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+    {{- if eq .Values.update_strategy.type "RollingUpdate" }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.update_strategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.update_strategy.rollingUpdate.maxSurge }}
+  {{- else if eq .Values.deployment.type "Recreate" }}
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels: {{ include "mylabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{ include "mylabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecrets.name }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.labels.app }}-app
+        image: {{ include "myimage" . }}
+        {{- if .Values.service.enabled }}
+        ports:
+        {{- range .Values.service.ports }}
+        - containerPort: {{ .targetPort }}
+        {{- end }}
+        {{- end }}
+        resources: {{ .Values.resources | toYaml | nindent 10 }}
+        {{- if .Values.secrets.enabled }}
+        env: {{ include "envsecret" . | indent 8 }}
+        {{- end }}
+        {{- if .Values.probes.enabled }}
+        readinessProbe: {{ .Values.probes.readinessProbe | toYaml | nindent 10 }}
+        livenessProbe: {{ .Values.probes.livenessProbe | toYaml | nindent 10 }}
+        {{- end }}
+        {{- if .Values.volumes.enabled}}
+        volumeMounts:
+        {{- if .Values.volumes.enabled }}
+        - name: {{ .Values.volumes.mountPathName }}
+          mountPath: {{ .Values.volumes.path }}
+        {{- end }}
+        {{- end }}
+      {{- if .Values.volumes.enabled }}
+      volumes:
+      {{- if .Values.volumes.enabled }}
+      - name: {{ .Values.volumes.mountPathName }}
+        persistentVolumeClaim:
+         claimName: {{ .Values.volumes.pvc }}
+      {{- end }}
+      {{- end }}
+      
