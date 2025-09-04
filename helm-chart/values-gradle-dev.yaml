@@ -12,7 +12,7 @@ namespace: "backend-dev"
 image:
   repository: ghcr.io/sadityalal
   name: projectapp
-  tag: 7f0b388
+  tag: 1858b77
   pullPolicy: IfNotPresent
 
 # Since we use private registry we need to authenticate before pulling the image.
